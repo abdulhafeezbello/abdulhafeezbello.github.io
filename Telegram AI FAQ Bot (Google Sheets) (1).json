@@ -1,0 +1,472 @@
+{
+  "name": "Telegram AI FAQ Bot (Google Sheets)",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "6e052841-ed62-4e81-bed1-08f7dd96fb9f",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -288,
+        128
+      ],
+      "webhookId": "82c86efe-84b5-49cc-8af7-a29d2daa58a0",
+      "credentials": {
+        "telegramApi": {
+          "id": "StZq1aTSa5usZD76",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $(\"Telegram Trigger\").item.json.message.text }}",
+        "options": {
+          "systemMessage": "=You are a friendly, professional customer support assistant for a small Nigerian business on Telegram. You have access to one tool called FAQ Lookup, which searches a Google Sheet of frequently asked questions with columns Question, Answer, and Keywords. Process for every incoming question: First, identify the single most relevant keyword in the customer question. Second, call FAQ Lookup with that keyword. Third, if the tool returns one or more matching rows, base your reply on the Answer column from the best match, keeping the original meaning but making it sound natural and conversational. Fourth, if the tool returns no matches, answer the question yourself as a helpful support agent using general knowledge about running a small business, but never invent specific business policies, prices, or facts you do not actually know - if you do not know something specific say a team member will follow up. Always reply in the same language the customer used. Keep replies short, one to three sentences, suitable for a chat app, with no markdown formatting. Never mention that you searched a spreadsheet or that you are an AI model. After answering, on a new line add a tag: if you answered using the FAQ tool write [STATUS:RESOLVED].If you could not not find an answer and gave a fallback response, write[STATUS:ESCALATE]."
+        }
+      },
+      "id": "40b4800a-68b6-414e-b0f0-6e9c89e766ac",
+      "name": "FAQ Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -64,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "8e433a45-d929-4729-8f14-4587a7527bf1",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        336
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "MH1aO2J72lQrSQOZ",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $(\"Telegram Trigger\").item.json.message.chat.id }}",
+        "contextWindowLength": 8
+      },
+      "id": "1f0567c6-4e9e-426d-80a8-e6ebefa18dce",
+      "name": "Conversation Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        368,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ofHhE_c87G1je0_egR5kKLjDyiezd3sETK3exK-CT80",
+          "mode": "list",
+          "cachedResultName": "FAQS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ofHhE_c87G1je0_egR5kKLjDyiezd3sETK3exK-CT80/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ofHhE_c87G1je0_egR5kKLjDyiezd3sETK3exK-CT80/edit#gid=0"
+        },
+        "options": {}
+      },
+      "id": "f98eae63-b456-4edc-84fe-b30112eb34d6",
+      "name": "FAQ Lookup",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        480,
+        336
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3Z4T0D5RolQXlozS",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $(\"Telegram Trigger\").item.json.message.chat.id }}",
+        "text": "=\n{{ $('Parse Output Agent').item.json.cleanReply }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "22a99105-6290-4e0a-bb20-06935285fc3a",
+      "name": "Send Telegram Reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        -192
+      ],
+      "webhookId": "75b1d943-5b4d-4d5d-ad50-d33aecfc8aaf",
+      "credentials": {
+        "telegramApi": {
+          "id": "StZq1aTSa5usZD76",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1MokUI7hKicm_mR5s84ByOVkywL8Nk1wte26vYONXQO8",
+          "mode": "list",
+          "cachedResultName": "LOGS",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MokUI7hKicm_mR5s84ByOVkywL8Nk1wte26vYONXQO8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MokUI7hKicm_mR5s84ByOVkywL8Nk1wte26vYONXQO8/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "User Name",
+              "displayName": "User Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Chat ID",
+              "displayName": "Chat ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Question",
+              "displayName": "Question",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Answer",
+              "displayName": "Answer",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Platform",
+              "displayName": "Platform",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "output",
+              "displayName": "output",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "1bd78831-d4ac-44db-ac42-6c86ca16a807",
+      "name": "Log Conversation",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        768,
+        416
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3Z4T0D5RolQXlozS",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Setup checklist: 1) Connect your Telegram Bot credential from BotFather. 2) Connect your Google Sheets OAuth2 credential. 3) Connect your OpenAI credential. 4) In FAQ Lookup and Log Conversation nodes, replace the placeholder Sheet ID with your real Google Sheet (FAQs tab needs columns Question, Answer, Keywords; Logs tab needs columns User Name, Chat ID, Question, Answer, Date, Platform). 5) Activate the workflow, then message your bot on Telegram to test.",
+        "height": 200,
+        "width": 300,
+        "color": 4
+      },
+      "id": "9875560c-982e-42ba-82d4-5227f3bc2673",
+      "name": "Sticky Note 23f1f3d9",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "18cf5224-9e0a-46d3-9fda-b8b21b386be0",
+              "name": "cleanReply",
+              "value": "={{ $json.output.split('[STATUS')[0].trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "74cec5aa-f3f2-47e2-ad34-318eec8435ea",
+              "name": "status",
+              "value": "={{ $json.output.includes('ESCALATE') ? 'ESCALATE' : 'RESOLVED' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        320,
+        112
+      ],
+      "id": "a098f23f-8304-4444-95a8-243a98301f56",
+      "name": "Parse Output Agent"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "df3a7d75-f73b-4cb2-8b34-931995c7bd00",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "ESCALATE",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        848,
+        224
+      ],
+      "id": "87a9ce97-fed8-4d12-b9de-f8e83d2cb84f",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "abdulhafeez.bello01@gmail.com",
+        "subject": "ORDER STATUS",
+        "emailType": "text",
+        "message": "={{ \"A customer asked a question the bot couldn't answer.\\n\\nQuestion: \" + $('Telegram Trigger').item.json.message.text + \"\\nCustomer: \" + $('Telegram Trigger').item.json.message.from.first_name + \"\\nChat ID: \" + $('Telegram Trigger').item.json.message.chat.id }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        992,
+        16
+      ],
+      "id": "955357e9-5a93-4a00-8280-287181488ae5",
+      "name": "Send a message",
+      "webhookId": "9c99fe7c-e97f-4053-95b0-20676778fd75",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "8ZmXHJj7WY8pTwHH",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "FAQ Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FAQ Agent": {
+      "main": [
+        [
+          {
+            "node": "Parse Output Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "FAQ Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "FAQ Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FAQ Lookup": {
+      "ai_tool": [
+        [
+          {
+            "node": "FAQ Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Output Agent": {
+      "main": [
+        [
+          {
+            "node": "Log Conversation",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Telegram Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "f7d33ded-d9c0-4ac4-8d69-823bb348079e",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5d5f2e758551db8617f258e483e640c3ae3da68c0ec8b84f839ebf5b9fba34ea"
+  },
+  "nodeGroups": [],
+  "id": "K4hz37sndEoPqT8Y",
+  "tags": []
+}

@@ -1,0 +1,762 @@
+{
+  "name": "Recruitment Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1h0B_ZoJvN1oL-OlkV_CfOI-EsN96jpAooaYkz8vimjo",
+          "mode": "list",
+          "cachedResultName": "Contact Information (Responses)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1h0B_ZoJvN1oL-OlkV_CfOI-EsN96jpAooaYkz8vimjo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 180761927,
+          "mode": "list",
+          "cachedResultName": "Form Responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1h0B_ZoJvN1oL-OlkV_CfOI-EsN96jpAooaYkz8vimjo/edit#gid=180761927"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1184,
+        -160
+      ],
+      "id": "6f0a2d2b-5780-4ebf-b81a-06ffdcc002e2",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "cLN5crPYLB5L5I7r",
+          "name": "Google Sheets Trigger OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "33d2c2ef-4e4c-4370-b7f8-3159d3c2ec02",
+              "name": "resumeFileId",
+              "value": "={{ $json.Resume.split('id=')[1] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -976,
+        -160
+      ],
+      "id": "8f1985e1-6973-4855-a814-26037a703a38",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.resumeFileId }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -768,
+        -160
+      ],
+      "id": "7843965d-7e5b-4c2d-9aa0-eb10cf7f465f",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "tugGIGBkd4JSd4Vh",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        -560,
+        -160
+      ],
+      "id": "b253818d-9586-45da-83c6-788f5e39b084",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "30b125b5-28ea-4e5c-9c67-d8e7c66c3cf8",
+              "name": "resumeText",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "eb53ce30-193a-478e-8697-9bc54d50ff51",
+              "name": "coverLetterText",
+              "value": "={{ $('Edit Fields').item.json['Cover letter'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -320,
+        -144
+      ],
+      "id": "9782724b-102b-4e3a-9a84-fc676e72bd17",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Resume:\n{{ $json.resumeText }}\n\nCover Letter:\n{{ $json.coverLetterText }}\n\n",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an expert AI recruitment assistant specializing in resume analysis and candidate evaluation. Your job is to carefully read a candidate's resume and cover letter, extract structured information, and return it in a strict JSON format.\n\nINSTRUCTIONS:\n- Read the full resume and cover letter thoroughly before extracting anything.\n- Be accurate — do not invent or assume skills or experience not explicitly mentioned or strongly implied by the text.\n- For experience_years, calculate based on the dates mentioned across all roles. If dates are unclear or absent, make a conservative estimate based on context clues.\n- For skills, include both technical skills (tools, software, certifications) and relevant soft skills that are explicitly demonstrated, not just claimed.\n- For education, include degree, field of study, institution, and graduation year if available.\n- For summary, write exactly 4 bullet points that a recruiter would find useful — focus on what makes this candidate distinctive, not generic praise.\n\nOUTPUT RULES:\n- Return ONLY a valid JSON object. No introductory text, no explanation, no markdown code fences, no commentary after the JSON.\n- Every field must be present even if the value is null or an empty array.\n- Do not truncate or abbreviate any field.\n- Use this exact structure:\n\n{\n  \"full_name\": \"candidate full name\",\n  \"skills\": [\"skill1\", \"skill2\", \"skill3\"],\n  \"experience_years\": number or null,\n  \"education\": \"Degree, Field of Study, Institution, Year\",\n  \"summary\": \"• Point 1\\n• Point 2\\n• Point 3\\n• Point 4\",\n  \"notable_achievements\": [\"achievement1\", \"achievement2\"],\n  \"red_flags\": [\"anything concerning or missing, e.g. gaps, vague dates\"] or []\n}\n\nIf any field genuinely cannot be determined from the text, set its value to null or an empty array as appropriate — never fabricate information."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        -64,
+        -144
+      ],
+      "id": "0e7914c0-bd2a-4126-a6e7-1bd811d178b5",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        80
+      ],
+      "id": "fddacb63-2cc8-4ca6-b891-422a11254aab",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "hkm7WcponvlcB7kV",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.text;\n\n// Strip markdown code fences if Groq adds them\nconst cleaned = raw.replace(/```json|```/g, '').trim();\n\nconst parsed = JSON.parse(cleaned);\n\nreturn [{ json: parsed }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        -144
+      ],
+      "id": "33d176ca-3236-4129-93fe-9fa447a07b50",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Job Role: Technical Trainee - CHI Limited (Chivita | Hollandia)\n\nProgramme: Technical Trainee Programme 2026\n\nRequired Qualifications:\n- HND or BSc in Engineering, Applied Sciences, or related discipline\n- Minimum Second Class Lower (2:2) or Upper Class Credit\n- Must have completed NYSC\n- 0-2 years of experience\n\nRequired Attributes:\n- Passionate about innovation and excellence\n- Eager to learn and solve problems\n- Team player with a proactive mindset\n- Hands-on technical aptitude\n\nRelevant Skills for Role: Quality Control, Lab Testing, Process Monitoring, Documentation, Analytical Thinking, SAP, MS Excel, Data Interpretation, Food Science knowledge\n\nCandidate Data:\nFull Name: {{ $json.full_name }}\nSkills: {{ $json.skills.join(', ') }}\nExperience Years: {{ $json.experience_years }}\nEducation: {{ $json.education }}\nSummary: {{ $json.summary }}\nNotable Achievements: {{ $json.notable_achievements.join(', ') }}\nRed Flags: {{ $json.red_flags.join(', ') || 'None' }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a senior recruitment specialist and talent assessment expert contracted by CHI Limited (Chivita | Hollandia) to evaluate candidates for their Technical Trainee Programme 2026. CHI Limited is one of Nigeria's leading beverage and dairy companies, and this programme is designed to develop young, passionate graduates into future-ready technical professionals across their manufacturing and operations divisions.\n\nYour evaluations are trusted by CHI Limited's HR directors and hiring managers to make critical shortlisting decisions. You are known for being thorough, fair, and evidence-based — you never inflate scores to be encouraging, and you never deflate them to be harsh. Your assessments are grounded strictly in what the candidate has demonstrably shown through their resume and cover letter, not what they merely claim.\n\nABOUT THE ROLE:\nCHI Limited's Technical Trainee Programme seeks HND/BSc graduates from Engineering, Applied Sciences, or related disciplines who have completed NYSC, hold a minimum of Second Class Lower (2:2) or Upper Class Credit, and have 0-2 years of experience. The ideal candidate is passionate about innovation and excellence, eager to learn, a strong team player with a proactive mindset, and has hands-on technical aptitude relevant to beverage/FMCG manufacturing operations.\n\nYOUR TASK:\nEvaluate how well the submitted candidate fits this specific programme and role. Return a precise, justified scoring report based strictly on the candidate data provided.\n\nSCORING CRITERIA — evaluate each dimension separately before arriving at a final weighted score:\n\n1. ACADEMIC FIT (25% weight)\n   - Is the degree in Engineering, Applied Sciences, Food Science, or a closely related field?\n   - Does the candidate meet the minimum Second Class Lower (2:2) or Upper Class Credit threshold? If grade is not stated, note it as unverified.\n   - Is the degree completed? Has NYSC been completed?\n\n2. TECHNICAL SKILLS MATCH (35% weight)\n   - Does the candidate possess hands-on technical skills relevant to FMCG/beverage manufacturing?\n   - Skills of particular value: Quality Control, Lab Testing, Process Monitoring, Food Science knowledge, SAP, MS Excel, Documentation, Data Interpretation, Analytical Thinking.\n   - Are skills demonstrated through actual work experience or just listed on a CV?\n\n3. EXPERIENCE RELEVANCE (25% weight)\n   - Is the candidate within the 0-2 year experience window?\n   - Is their experience directly relevant to technical operations, manufacturing, or quality in an FMCG setting?\n   - NYSC experience in a relevant role counts positively.\n\n4. BEHAVIOURAL & CULTURE FIT (15% weight)\n   - Does the candidate demonstrate innovation, problem-solving, teamwork, and a proactive mindset through their achievements and summary?\n   - Are there concrete examples of initiative, learning agility, or cross-functional collaboration?\n   - Community involvement, leadership roles, or volunteer work count positively here.\n\nGRADING SCALE:\n- 9.0 - 10.0 → A (Exceptional match, prioritize immediately)\n- 7.5 - 8.9  → B (Strong candidate, recommend shortlist)\n- 6.0 - 7.4  → C (Moderate fit, consider with reservations)\n- 4.0 - 5.9  → D (Weak fit, significant gaps)\n- Below 4.0  → F (Not suitable for this programme)\n\nRECOMMENDATION RULES:\n- Score 7.5 and above → \"Shortlist\"\n- Score 6.0 to 7.4 → \"Hold\"\n- Score below 6.0 → \"Reject\"\n\nOUTPUT RULES:\n- Return ONLY a valid JSON object. No introductory sentences, no closing remarks, no markdown code fences, no explanation outside the JSON.\n- Every field must be present. Never omit a field even if the value is an empty array.\n- Be specific in strengths and gaps — generic statements are not acceptable unless directly evidenced by the candidate data.\n- The feedback field must read like something a senior CHI Limited recruiter would write in an internal evaluation report — professional, specific, decisive, and referencing the candidate's actual background.\n- Use this exact JSON structure:\n\n{\n  \"score\": number between 1.0 and 10.0 (one decimal place),\n  \"grade\": \"A\" or \"B\" or \"C\" or \"D\" or \"F\",\n  \"academic_fit_score\": number between 1 and 10,\n  \"technical_skills_score\": number between 1 and 10,\n  \"experience_relevance_score\": number between 1 and 10,\n  \"behavioural_fit_score\": number between 1 and 10,\n  \"strengths\": [\"specific strength 1\", \"specific strength 2\", \"specific strength 3\"],\n  \"gaps\": [\"specific gap 1\", \"specific gap 2\"],\n  \"recommendation\": \"Shortlist\" or \"Hold\" or \"Reject\",\n  \"feedback\": \"2-3 sentence professional recruiter summary that justifies the score and recommendation with specific reference to the candidate's Food Science background, NYSC experience, and technical skill set as they relate to CHI Limited's manufacturing environment\"\n}\n\nIMPORTANT: If NYSC completion is confirmed in the candidate data, note it positively under strengths. If degree classification is not stated, flag it under gaps as unverified. Do not assume information that is not present in the candidate data.\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        496,
+        -144
+      ],
+      "id": "eecfbb23-ad39-4d1a-ad8a-d714bd254a02",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        432,
+        64
+      ],
+      "id": "3f8094c0-54a9-4ba2-81de-e8d4d30eb3ca",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "hkm7WcponvlcB7kV",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.text;\n\nconst cleaned = raw.replace(/```json|```/g, '').trim();\n\nconst parsed = JSON.parse(cleaned);\n\nreturn [{ json: parsed }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        848,
+        -144
+      ],
+      "id": "cca375f3-76c4-4844-8ed8-019922fcde39",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1F5GUD5G4HCNRmT6jcVHVhhQn2OYX0H9Bgp9r_3rbRXc",
+          "mode": "list",
+          "cachedResultName": "Recruitment Pipeline",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1F5GUD5G4HCNRmT6jcVHVhhQn2OYX0H9Bgp9r_3rbRXc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1F5GUD5G4HCNRmT6jcVHVhhQn2OYX0H9Bgp9r_3rbRXc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Timestamp": "={{ $('Google Sheets Trigger').item.json.Timestamp }}",
+            "Full Name": "={{ $('Google Sheets Trigger').item.json['Full Name'] }}",
+            "Email": "={{ $('Google Sheets Trigger').item.json.Email }}",
+            "Phone": "={{ $('Google Sheets Trigger').item.json['Phone number'] }}",
+            "Address ": "={{ $('Google Sheets Trigger').item.json.Address }}",
+            "Gender": "={{ $('Google Sheets Trigger').item.json.Gender }}",
+            "Date of Birth": "={{ $('Google Sheets Trigger').item.json['Date of Birth'] }}",
+            "Cover Letter": "={{ $('Google Sheets Trigger').item.json['Cover letter'] }}",
+            "Resume Link": "={{ $('Google Sheets Trigger').item.json.Resume }}",
+            "Skills": "={{ $('Code in JavaScript').item.json.skills }}",
+            "Experience Years": "={{ $('Code in JavaScript').item.json.experience_years }}",
+            "Education": "={{ $('Code in JavaScript').item.json.education }}",
+            "Summary": "={{ $('Code in JavaScript').item.json.summary }}",
+            "Notable Achievements": "={{ $('Code in JavaScript').item.json.notable_achievements }}",
+            "Red Flags": "={{ $('Code in JavaScript').item.json.red_flags }}",
+            "Grade": "={{ $json.grade }}",
+            "Score": "={{ $json.score }}",
+            "Academic Fit": "={{ $json.academic_fit_score }}",
+            "Technical Skills": "={{ $json.technical_skills_score }}",
+            "Experience Relevance": "={{ $json.experience_relevance_score }}",
+            "Behavioural Fit ": "={{ $json.behavioural_fit_score }}",
+            "Strength": "={{ $json.strengths }}",
+            "Gaps": "={{ $json.gaps }}",
+            "Recommenation": "={{ $json.recommendation }}",
+            "Feedback": "={{ $json.feedback }}",
+            "Pipeline Stage": "New"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Full Name",
+              "displayName": "Full Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Address ",
+              "displayName": "Address ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Gender",
+              "displayName": "Gender",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Date of Birth",
+              "displayName": "Date of Birth",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Cover Letter",
+              "displayName": "Cover Letter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Resume Link",
+              "displayName": "Resume Link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Skills",
+              "displayName": "Skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Experience Years",
+              "displayName": "Experience Years",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Education",
+              "displayName": "Education",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notable Achievements",
+              "displayName": "Notable Achievements",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Red Flags",
+              "displayName": "Red Flags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Grade",
+              "displayName": "Grade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Academic Fit",
+              "displayName": "Academic Fit",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Technical Skills",
+              "displayName": "Technical Skills",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Experience Relevance",
+              "displayName": "Experience Relevance",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Behavioural Fit ",
+              "displayName": "Behavioural Fit ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Strength",
+              "displayName": "Strength",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Gaps",
+              "displayName": "Gaps",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Recommenation",
+              "displayName": "Recommenation",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Feedback",
+              "displayName": "Feedback",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Pipeline Stage",
+              "displayName": "Pipeline Stage",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1056,
+        -144
+      ],
+      "id": "4cf41398-bb5e-4b7e-9d8b-d8ea325dfb7e",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3Z4T0D5RolQXlozS",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Google Sheets Trigger').item.json.Email }}",
+        "subject": " Application Received – CHI Limited Technical Trainee Programme 2026",
+        "message": "=<p>Dear {{ $('Google Sheets Trigger').item.json['Full Name'] }},</p>\n\n<p>Thank you for submitting your application for the <strong>CHI Limited Technical Trainee Programme 2026</strong>. We have successfully received your application and it is currently under review.</p>\n\n<p><strong>Here is a summary of what you submitted:</strong></p>\n<ul>\n  <li><strong>Role Applied For:</strong> Technical Trainee – CHI Limited</li>\n  <li><strong>Application Date:</strong> {{ $('Google Sheets Trigger').item.json.Timestamp }}</li>\n</ul>\n\n<p>Our recruitment team will carefully evaluate your profile and reach out to you within <strong>5–7 working days</strong> regarding the next steps.</p>\n\n<p>If you have any questions in the meantime, please do not hesitate to contact us.</p>\n\n<br>\n<p>Best regards,<br>\n<strong>CHI Limited Recruitment Team</strong></p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1264,
+        -144
+      ],
+      "id": "f19b239e-befb-4c9f-ae7f-5020defde7ee",
+      "name": "Send a message",
+      "webhookId": "80e343b5-4e18-4914-bebb-33439b992c09",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "8ZmXHJj7WY8pTwHH",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "abdulhafeez.bello01@gmail.com",
+        "subject": "=🧾 New Application: {{ $('Google Sheets Trigger').item.json['Full Name'] }} – Score: {{ $('Code in JavaScript1').item.json.score }}/10",
+        "message": "=<h2>New Candidate Application – CHI Limited Technical Trainee Programme 2026</h2>\n\n<p><strong>Candidate Details:</strong></p>\n<ul>\n  <li><strong>Name:</strong> {{ $('Google Sheets Trigger').item.json['Full Name'] }}</li>\n  <li><strong>Email:</strong> {{ $('Google Sheets Trigger').item.json.Email }}</li>\n  <li><strong>Phone:</strong> {{ $('Google Sheets Trigger').item.json['Phone number'] }}</li>\n  <li><strong>Application Date:</strong> {{ $('Google Sheets Trigger').item.json.Timestamp }}</li>\n</ul>\n\n<p><strong>AI Evaluation Summary:</strong></p>\n<ul>\n  <li><strong>Overall Score:</strong> {{ $('Code in JavaScript1').item.json.score }}/10</li>\n  <li><strong>Grade:</strong> {{ $('Code in JavaScript1').item.json.grade }}</li>\n  <li><strong>Recommendation:</strong> {{ $('Code in JavaScript1').item.json.recommendation }}</li>\n  <li><strong>Academic Fit:</strong> {{ $('Code in JavaScript1').item.json.academic_fit_score }}/10</li>\n  <li><strong>Technical Skills:</strong> {{ $('Code in JavaScript1').item.json.technical_skills_score }}/10</li>\n  <li><strong>Experience Relevance:</strong> {{ $('Code in JavaScript1').item.json.experience_relevance_score }}/10</li>\n  <li><strong>Behavioural Fit:</strong> {{ $('Code in JavaScript1').item.json.behavioural_fit_score }}/10</li>\n</ul>\n\n<p><strong>Strengths:</strong> {{ $('Code in JavaScript1').item.json.strengths.join(', ') }}</p>\n<p><strong>Gaps:</strong> {{ $('Code in JavaScript1').item.json.gaps.join(', ') }}</p>\n\n<p><strong>Recruiter Feedback:</strong><br>\n{{ $('Code in JavaScript1').item.json.feedback }}</p>\n\n<p><a href=\"https://docs.google.com/spreadsheets\">View full record in Recruitment Pipeline Sheet</a></p>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1440,
+        -160
+      ],
+      "id": "eada416c-8720-45e7-a1cb-ebc4c1327393",
+      "name": "Send a message1",
+      "webhookId": "1c5429c9-c6b8-42c1-b049-93d3af95626a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "8ZmXHJj7WY8pTwHH",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "f0ce094d-9738-4a38-87f1-42c8cc03ddca",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5d5f2e758551db8617f258e483e640c3ae3da68c0ec8b84f839ebf5b9fba34ea"
+  },
+  "nodeGroups": [],
+  "id": "19eYQmsNObvAl7fL",
+  "tags": []
+}

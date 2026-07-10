@@ -1,0 +1,825 @@
+{
+  "name": "Loan workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Loan eligibility",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Date of Birth",
+              "fieldType": "date"
+            },
+            {
+              "fieldLabel": "Email",
+              "fieldType": "email"
+            },
+            {
+              "fieldLabel": "Account Number"
+            },
+            {
+              "fieldLabel": "NIN",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Income",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Loan amount",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Employment status",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Employed"
+                  },
+                  {
+                    "option": "Unemployed"
+                  },
+                  {
+                    "option": "Student"
+                  },
+                  {
+                    "option": "Entrepreneur"
+                  },
+                  {
+                    "option": "Other"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Employment tenure",
+              "fieldType": "number",
+              "placeholder": "In months"
+            },
+            {
+              "fieldLabel": "Loan Purpose",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Business"
+                  },
+                  {
+                    "option": "Education"
+                  },
+                  {
+                    "option": "Personal"
+                  },
+                  {
+                    "option": "Other"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Repayment term",
+              "fieldType": "number",
+              "placeholder": "How long before you pay back in months",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Number of dependants",
+              "fieldType": "number"
+            },
+            {
+              "fieldLabel": "Existing monthly debt obligations"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -1456,
+        -48
+      ],
+      "id": "3491049e-929d-45de-ba7a-e5c9db1602b1",
+      "name": "On form submission",
+      "webhookId": "a033029d-8f85-468c-b066-736a5eecc3e4"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1CQJb2Tmf9E4Y79ah5vu0-yZOAXCT22OO9cOa_8Q9lc0",
+          "mode": "list",
+          "cachedResultName": "Loan database",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CQJb2Tmf9E4Y79ah5vu0-yZOAXCT22OO9cOa_8Q9lc0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1CQJb2Tmf9E4Y79ah5vu0-yZOAXCT22OO9cOa_8Q9lc0/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "NIN",
+              "lookupValue": "={{ $('On form submission').item.json.NIN }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1232,
+        -112
+      ],
+      "id": "0bdb804f-9889-4e0d-971c-17b9f7a24e9b",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3Z4T0D5RolQXlozS",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c22a70d1-eb52-47ba-9240-1580d5f389c2",
+              "leftValue": "={{ $json.NIN }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1008,
+        -112
+      ],
+      "id": "a3b95408-4684-45d6-8175-c70c076da5ad",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c837f352-3386-403d-b715-2a4223ef3f33",
+              "name": "found",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "8d9ba921-e23a-4088-b992-441e51ac98c6",
+              "name": "total_loans",
+              "value": "= {{ $json.total_loans }}",
+              "type": "number"
+            },
+            {
+              "id": "da7fbc1c-d96d-4ac3-996a-8938047184b0",
+              "name": "loans_repaid_on_time",
+              "value": "={{ $json.loans_repaid_on_time }}",
+              "type": "number"
+            },
+            {
+              "id": "e3270b58-e760-4517-b26d-189e9899b09f",
+              "name": "loans_defaulted",
+              "value": "={{ $json.loans_defaulted }}",
+              "type": "number"
+            },
+            {
+              "id": "ef1ea5a2-ee55-40a1-96f7-f5d2717e7d38",
+              "name": "active_loan_balance",
+              "value": "={{ $json.active_loan_balance }}",
+              "type": "number"
+            },
+            {
+              "id": "47534170-1fbd-456d-a41d-9d4155064bc1",
+              "name": "last_loan_date",
+              "value": "={{ $json.last_loan_date }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -784,
+        -208
+      ],
+      "id": "798ec78a-62c9-4399-b437-42540f926ac5",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d1675baf-13a4-4ef6-8f95-2300def3d74b",
+              "name": "found",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "b7385d4b-ae90-4054-bc30-3e99087b4132",
+              "name": "total_loans",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "id": "ec39a542-9124-4ac5-933c-6bf517630515",
+              "name": "loans_repaid_on_time",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "id": "e8410c38-df33-4562-ba05-eb80cd2d6a09",
+              "name": "loans_defaulted",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "id": "dfc980ee-25b9-4957-9d40-3e4971ce7357",
+              "name": "active_loan_balance",
+              "value": 0,
+              "type": "number"
+            },
+            {
+              "id": "95a91917-a349-44de-8f4e-847057651768",
+              "name": "last_loan_date",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -560,
+        -16
+      ],
+      "id": "06296a4a-e48d-4569-a50a-9c7ca0585497",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -560,
+        -208
+      ],
+      "id": "de07c89f-ca30-4025-b99e-42bfcea9e89e",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -336,
+        -48
+      ],
+      "id": "436d5e05-0e83-416c-9b6e-c8880dfef2ac",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// === Loan Eligibility Scoring ===\nconst data = $input.first().json;\n\n// --- Normalize inputs ---\nconst income = Number(data[\"Income\"]) || 0;\nconst loanAmount = Number(data[\"Loan amount\"]) || 0;\nconst repaymentTermMonths = Number(data[\"Repayment term\"]) || 1;\nconst employmentTenureMonths = Number(data[\"Employment tenure\"]) || 0;\nconst dependents = Number(data[\"Number of dependants\"]) || 0;\nconst existingDebt = Number(data[\"Existing monthly debt obligations\"]) || 0;\nconst employmentStatus = (data[\"Employment status\"] || \"\").toLowerCase();\n\nconst found = data.found === true;\nconst totalLoans = Number(data.total_loans) || 0;\nconst loansRepaidOnTime = Number(data.loans_repaid_on_time) || 0;\nconst loansDefaulted = Number(data.loans_defaulted) || 0;\nconst activeLoanBalance = Number(data.active_loan_balance) || 0;\n\n// --- 1. Repayment history (max 40) ---\nlet repaymentScore = 0;\nif (!found || totalLoans === 0) {\n  repaymentScore = 20;\n} else {\n  const repaymentRate = loansRepaidOnTime / totalLoans;\n  const defaultRate = loansDefaulted / totalLoans;\n  repaymentScore = Math.round((repaymentRate * 40) - (defaultRate * 20));\n  repaymentScore = Math.max(0, Math.min(40, repaymentScore));\n}\n\n// --- 2. Debt-to-income (max 25) ---\nconst monthlyIncome = income / 12;\nconst estimatedMonthlyInstallment = loanAmount / repaymentTermMonths;\nconst totalMonthlyDebt = existingDebt + estimatedMonthlyInstallment + activeLoanBalance / repaymentTermMonths;\nconst dti = monthlyIncome > 0 ? totalMonthlyDebt / monthlyIncome : 1;\n\nlet dtiScore;\nif (dti <= 0.2) dtiScore = 25;\nelse if (dti <= 0.35) dtiScore = 18;\nelse if (dti <= 0.5) dtiScore = 10;\nelse dtiScore = 0;\n\n// --- 3. Employment stability (max 15) ---\nlet employmentScore = 0;\nif (employmentStatus === \"employed\" || employmentStatus === \"self-employed\") {\n  if (employmentTenureMonths >= 24) employmentScore = 15;\n  else if (employmentTenureMonths >= 12) employmentScore = 10;\n  else if (employmentTenureMonths >= 6) employmentScore = 5;\n  else employmentScore = 2;\n}\n\n// --- 4. Loan-to-income reasonableness (max 10) ---\nconst loanToIncomeRatio = income > 0 ? loanAmount / income : 999;\nlet loanSizeScore;\nif (loanToIncomeRatio <= 1) loanSizeScore = 10;\nelse if (loanToIncomeRatio <= 2) loanSizeScore = 6;\nelse if (loanToIncomeRatio <= 3) loanSizeScore = 3;\nelse loanSizeScore = 0;\n\n// --- 5. Dependents adjustment (max 10) ---\nlet dependentsScore;\nif (dependents === 0) dependentsScore = 10;\nelse if (dependents <= 2) dependentsScore = 7;\nelse if (dependents <= 4) dependentsScore = 4;\nelse dependentsScore = 1;\n\n// --- Total ---\nconst totalScore = repaymentScore + dtiScore + employmentScore + loanSizeScore + dependentsScore;\n\nlet riskCategory;\nif (totalScore >= 75) riskCategory = \"low\";\nelse if (totalScore >= 50) riskCategory = \"medium\";\nelse riskCategory = \"high\";\n\nreturn {\n  json: {\n    ...data,\n    score: totalScore,\n    risk_category: riskCategory,\n    score_breakdown: {\n      repayment_score: repaymentScore,\n      dti_score: dtiScore,\n      employment_score: employmentScore,\n      loan_size_score: loanSizeScore,\n      dependents_score: dependentsScore\n    },\n    debt_to_income_ratio: Math.round(dti * 100) / 100,\n    loan_to_income_ratio: Math.round(loanToIncomeRatio * 100) / 100,\n    estimated_monthly_installment: Math.round(estimatedMonthlyInstallment)\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        -48
+      ],
+      "id": "4bba07bd-ce8e-4478-9cdb-4aa659356fe8",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions\n",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"You are a loan risk analyst. Respond only with valid JSON containing two fields: explanation and recommendation. Do not invent numbers not provided.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": {{ JSON.stringify(\"Based on this applicant data, write a 3-4 sentence plain-English explanation of their risk category and score. Be specific about which factors helped or hurt them.\\n\\nData: \" + JSON.stringify($json)) }}\n    }\n  ],\n  \"response_format\": { \"type\": \"json_object\" }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        112,
+        -48
+      ],
+      "id": "20f77d0a-7acd-4118-8f6d-3697d11d1aa8",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "oAKDutfec4bjq3ia",
+          "name": "Query Auth account"
+        },
+        "httpHeaderAuth": {
+          "id": "JZQfFV8aDqo1TXiU",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const groqResponse = $input.first().json;\nconst rawContent = groqResponse.choices[0].message.content;\nconst parsed = JSON.parse(rawContent);\n\n// Pull the scoring data forward from the scoring node\nconst scoringData = $('Code in JavaScript').first().json;\n\nreturn {\n  json: {\n    ...scoringData,\n    explanation: parsed.explanation,\n    recommendation: parsed.recommendation\n  }\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        336,
+        -48
+      ],
+      "id": "390d81a6-ce53-4c99-84e4-d06dd576c4d0",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.risk_category }}",
+                    "rightValue": "low",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "412742e9-2964-41c9-9c35-af6c23082e08"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Low risk"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "23c83ccb-b6fe-426a-8807-264084be87da",
+                    "leftValue": "={{ $json.risk_category }}",
+                    "rightValue": "medium",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Medium risk"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "75202c4e-ab97-4460-98ad-b60110ed66cd",
+                    "leftValue": "={{ $json.risk_category }}",
+                    "rightValue": "high",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "High risk"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        -64
+      ],
+      "id": "528b8405-f859-4861-af6a-b6e7c3d19a53",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "sendTo": "abdulhafeez.bello01@gmail.com",
+        "subject": "=Loan review needed: {{ $json.Name }} - {{ $json.risk_category }} risk",
+        "emailType": "text",
+        "message": "=Applicant: {{ $json.Name }}\nScore: {{ $json.score }} ({{ $json.risk_category }} risk)\n\n{{ $json.explanation }}\n\nRecommendation: {{ $json.recommendation }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        784,
+        -48
+      ],
+      "id": "bc63c6ce-8473-49d1-916f-feda59ef594b",
+      "name": "Send a message",
+      "webhookId": "19ec37b6-c567-4b50-b08d-fae1a81c016a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "8ZmXHJj7WY8pTwHH",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "abdulhafeez.bello01@gmail.com",
+        "subject": "=Loan review needed: {{ $json.Name }} - {{ $json.risk_category }} risk",
+        "emailType": "text",
+        "message": "=Applicant: {{ $json.Name }} Score: {{ $json.score }} ({{ $json.risk_category }} risk)  {{ $json.explanation }}  Recommendation: {{ $json.recommendation }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        784,
+        144
+      ],
+      "id": "a4104f35-bb83-4fa0-aa2e-d2ebb73f0f7d",
+      "name": "Send a message1",
+      "webhookId": "aebc6163-f01a-4580-b78d-ecf7ab600572",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "8ZmXHJj7WY8pTwHH",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('On form submission').item.json.Email }}",
+        "subject": "Your loan application has been approved",
+        "emailType": "text",
+        "message": "=Hi {{ $json.Name }},  Good news — your loan application has been approved.  Loan amount: {{ $json[\"Loan amount\"] }} Estimated monthly installment: {{ $json.estimated_monthly_installment }} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        784,
+        -240
+      ],
+      "id": "3e45b229-7064-48b4-90a0-2d41214cb294",
+      "name": "Send a message2",
+      "webhookId": "20bc9217-d039-4179-82ea-7cdbd773d549",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "8ZmXHJj7WY8pTwHH",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Entry point. Captures applicant data: identity, income, loan request, employment, dependents. NIN is the required field used as the lookup key for repayment history later."
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1520,
+        48
+      ],
+      "typeVersion": 1,
+      "id": "cc94e5e7-65c2-4600-8d0d-bca9111c7310",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Looks up the applicant's repayment history by NIN against a verified records sheet, instead of trusting self-reported history."
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1312,
+        -368
+      ],
+      "typeVersion": 1,
+      "id": "b1628f8a-0480-4adc-a484-ea2c09c2e104",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "checks whether matching record is found in verfied record."
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1104,
+        -32
+      ],
+      "typeVersion": 1,
+      "id": "24ad23df-4e20-4cf6-a884-bc9532b60755",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "Maps the found record into a fixed output shape: found, total_loans, loans_repaid_on_time, loans_defaulted, active_loan_balance, last_loan_date.",
+        "height": 240
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -848,
+        -288
+      ],
+      "typeVersion": 1,
+      "id": "a7d24b52-9692-4870-a32f-209061e8e998",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "The core decision logic. Calculates a 0–100 score from five weighted factors: repayment history (40 pts, weighted heaviest since past behavior is the strongest predictor), debt-to-income ratio (25 pts), employment stability (15 pts), loan-to-income reasonableness (10 pts), dependents (10 pts). Outputs a risk category (low/medium/high) plus the full breakdown for transparency. Rule-based and deterministic on purpose — for a financial decision, every score must be explainable and reproducible, which a pure LLM judgment can't reliably guarantee."
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -720,
+        400
+      ],
+      "typeVersion": 1,
+      "id": "6666b455-e688-47dd-b556-f20c7cf4ef22",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "Sends the score and breakdown to an LLM, asking it to translate the numbers into a plain-English explanation and recommendation. The LLM never decides the score itself — it only explains a decision that's already been made, which keeps the actual risk assessment consistent and auditable."
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -352,
+        368
+      ],
+      "typeVersion": 1,
+      "id": "e3f9a788-84e5-42f6-bc43-61b53f81ea13",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "Parses the LLM's JSON response and merges explanation and recommendation back into the main applicant record, producing one final, complete object.\nSwitch"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -96,
+        368
+      ],
+      "typeVersion": 1,
+      "id": "b47a4f81-b13d-4258-8573-10ba18b492a2",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "content": "The endpoint for each risk tier — low-risk gets an applicant-facing approval message; medium and high route to a human reviewer with the AI-generated explanation attached, so no application falls through without an outcome.\n"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        544,
+        144
+      ],
+      "typeVersion": 1,
+      "id": "24c8c0ca-ff40-48c6-8058-c6a5789fe8f5",
+      "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "content": "IF AN APPLICANT COMES BACK AS HAVING NO HISTORY, ONLY THE CONTENTS OF HIS APPLICATION IS USED TO EVALUATE RISK LEVEL."
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -80,
+        -320
+      ],
+      "typeVersion": 1,
+      "id": "5c01afb3-605e-4b7e-a0a5-7f65f630ffb6",
+      "name": "Sticky Note8"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "83ec829d-b471-4d5d-a8e7-fea661c81531",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5d5f2e758551db8617f258e483e640c3ae3da68c0ec8b84f839ebf5b9fba34ea"
+  },
+  "nodeGroups": [],
+  "id": "121zWvh9uvMjhusf",
+  "tags": []
+}
